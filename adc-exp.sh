@@ -3,7 +3,7 @@
 ## script to interact with the ADC Expansion
 
 # global variables
-bUsage=1
+bUsage=0
 bJson=0
 bInit=0
 
@@ -136,7 +136,7 @@ readAdcValue () {
 
 
 ### MAIN PROGRAM ###
-# parse arguments
+# parse options
 while [ "$1" != "" ]
 do
     case "$1" in
@@ -153,17 +153,23 @@ do
             switchVal=$1
             shift
         ;;
+        *)
+        	# this last argument should be the input channel, AINx
+        	break
+        ;;
     esac
-    
-    if [ "$1" != "" ]; then
-    	inputChannel="$1"
-    	bUsage=0
-    	shift
-    else
-    	echo "ERROR: Expecting channel input"
-    fi
-    	
 done
+
+# parse input channel
+if [ "$1" != "" ]; then
+	inputChannel="$1"
+	shift
+else
+	echo "ERROR: Expecting channel input"
+	bUsage=1
+fi
+
+# TODO: add checking for valid switch and channel inputs
 
 # initialize the expansion
 if [ $bUsage == 1 ]; then
@@ -171,18 +177,23 @@ if [ $bUsage == 1 ]; then
 	exit
 fi
 
-# TODO: add checking for valid switch and channel inputs
-
 
 # decode the device and channel 
 #	this sets global variables $deviceAddr and $deviceChannel
 decodeChannel $switchVal $inputChannel
 #echo "decodeChannel done: deviceAddr = $deviceAddr, deviceChannel = $deviceChannel"
 
+# configure the adc, then read the input value
 val=$(readAdcValue $deviceChannel)
-echo $val
 
-#TODO: implement json vs normal output
+
+if [ $bJson == 1 ]; then
+	echo "{\"channel\":$inputChannel,\"voltage\":$val, \"switch\":$switchVal}"
+else
+	echo "AIN$inputChannel Voltage: $val V"
+fi
+
+
 
 
 
