@@ -18,6 +18,8 @@ deviceAddrSwitch1=0x48
 deviceConfigReg="0x01"
 deviceConversionReg="0x00"
 
+deviceSetMaxFsrMask=0xf1ff
+deviceEnableContConvMask=0xfeff
 deviceInputMuxMask=0x8fff
 deviceInputMuxChannel0=0x4000
 deviceInputMuxChannel1=0x5000
@@ -42,12 +44,6 @@ Usage () {
         echo ""
 }
 
-# initialize the expansion
-initializeExp () {
-	# writing 0x8083 to config register
-	i2cset -y 0 $deviceAddr $deviceConfigReg 0x8300 w
-}
-
 # set the device address and channel based on input 
 #	argument1 - address switch value
 #	argument2 - AINx channel
@@ -70,15 +66,20 @@ decodeChannel () {
 }
 
 # program ADS chip to read a specific channel
+# will also FSR to max & enable continuous conversion mode
 #	argument1 - ADS channel (0-3)
-# TODO: add automatic initialization if required to this function
 setChannel () {
 	# read current configuration register value
 	config=$(i2cget -y 0 $deviceAddr $deviceConfigReg w | sed -e 's/0x\(..\)\(..\)/0x\2\1/')
-	# mask out the input multiplexor config
-	config=$(printf "0x%04x\n" $(($config & $deviceInputMuxMask)))
+	
+	# set the FSR to max
+	config=$(printf "0x%04x\n" $(($config & $deviceSetMaxFsrMask)))
+	# enable continuous conversion mode
+	config=$(printf "0x%04x\n" $(($config & $deviceEnableContConvMask)))
 	
 	# set the input value
+	# 	first, mask out the input multiplexor config
+	config=$(printf "0x%04x\n" $(($config & $deviceInputMuxMask)))
 	case "$1" in
         0)
         	muxMask=deviceInputMuxChannel0
@@ -99,7 +100,7 @@ setChannel () {
 	# flip the bytes and write to the config register
 	config=$(echo "$config" | sed -e 's/0x\(..\)\(..\)/0x\2\1/' )
 	i2cset -y 0 $deviceAddr $deviceConfigReg $config w
-	echo "wrote: i2cset -y 0 $deviceAddr $deviceConfigReg $config w" 
+	#echo "wrote: i2cset -y 0 $deviceAddr $deviceConfigReg $config w" 
 	
 	# wait for the conversion delay before reading the conversion register
 	/usr/bin/sleep $deviceConversionDelay
@@ -109,7 +110,7 @@ setChannel () {
 #	argument1 - ADS device channel (0-3)
 readAdcValue () {
 	# set the input channel mux
-	#setChannel $1
+	setChannel $1
 	
 	# read adc 16 bit value
 	adcVal=$(($(i2cget -y 0 $deviceAddr $deviceConversionReg w | sed -e 's/0x\(..\)\(..\)/0x\2\1/')/1))
@@ -147,21 +148,11 @@ do
             bJson=1
             shift
         ;;
-        -i|--i|init|-init|--init)
-            bInit=1
-            shift
-        ;;
         -s|--s|switch|-switch|--switch)
             shift
             switchVal=$1
             shift
         ;;
-        #*)
-        #    echo "ERROR: Invalid Argument: $1"
-        #	echo ""
-        #	bUsage=1		
-        #    shift
-        #;;
     esac
     
     if [ "$1" != "" ]; then
@@ -186,16 +177,12 @@ fi
 # decode the device and channel 
 #	this sets global variables $deviceAddr and $deviceChannel
 decodeChannel $switchVal $inputChannel
-echo "decodeChannel done: deviceAddr = $deviceAddr, deviceChannel = $deviceChannel"
-
-# initialize the expansion
-if [ $bInit == 1 ]; then
-	initializeExp
-fi
-
-setChannel $deviceChannel
+#echo "decodeChannel done: deviceAddr = $deviceAddr, deviceChannel = $deviceChannel"
 
 val=$(readAdcValue $deviceChannel)
 echo $val
+
+#TODO: implement json vs normal output
+
 
 
