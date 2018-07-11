@@ -1,36 +1,15 @@
-# Simple demo of continuous ADC conversion mode for channel 0 of the ADS1x15 ADC.
-# Author: Tony DiCola
-# License: Public Domain
+# enable continuous conversion mode and read channel 0 on the ADC Expansion
 import time
+from OmegaExpansion import AdcExp
 
-# Import the module.
-from AdcExp import AdcExp
+# Create an ADC Expansion instance
+#   and specify the address indicated by the address switch
+adc = AdcExp.AdcExp(address=0x48)
 
-
-# Create an ADS1115 ADC (16-bit) instance.
-adc = AdcExp(address=0x48)
-
-# Or create an ADS1015 ADC (12-bit) instance.
-#adc = Adafruit_ADS1x15.ADS1015()
-
-# Note you can change the I2C address from its default (0x48), and/or the I2C
-# bus by passing in these optional parameters:
-#adc = Adafruit_ADS1x15.ADS1015(address=0x49, busnum=1)
-
-# Choose a gain of 1 for reading voltages from 0 to 4.09V.
-# Or pick a different gain to change the range of voltages that are read:
-#  - 2/3 = +/-6.144V
-#  -   1 = +/-4.096V
-#  -   2 = +/-2.048V
-#  -   4 = +/-1.024V
-#  -   8 = +/-0.512V
-#  -  16 = +/-0.256V
-# See table 3 in the ADS1015/ADS1115 datasheet for more info on gain.
+# set the gain to be 2/3 to read voltages from -6.144 to +6.144V
 GAIN = 2/3
 
 # Start continuous ADC conversions on channel 0 using the previously set gain
-# value.  Note you can also pass an optional data_rate parameter, see the simpletest.py
-# example and read_adc function for more infromation.
 adc.start_adc(0, gain=GAIN)
 # Once continuous ADC conversions are started you can call get_last_result() to
 # retrieve the latest result, or stop_adc() to stop conversions.
