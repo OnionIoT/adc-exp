@@ -189,7 +189,7 @@ if [ "$inputChannel" == "all" ]; then
 	A3=$(readAdcValue 3)
 
 	if [ $bJson == 1 ]; then
-		echo "{\"A0\":$A0,\"A1\":$A1,\"A2\":$A2,\"A3\":$A3,\"switch\":$switchVal}"
+		echo "{\"A0\":$A0,\"A1\":$A1,\"A2\":$A2,\"A3\":$A3,\"switch\":\"$switchVal\"}"
 	else
 		echo "A0 Voltage: $A0 V"
 		echo "A1 Voltage: $A1 V"
@@ -201,7 +201,7 @@ else
 	val=$(readAdcValue $inputChannel)
 
 	if [ $bJson == 1 ]; then
-		echo "{\"channel\":$inputChannel,\"voltage\":$val, \"switch\":$switchVal}"
+		echo "{\"channel\":$inputChannel,\"voltage\":$val, \"switch\":\"$switchVal\"}"
 	else
 		echo "A$inputChannel Voltage: $val V"
 	fi
