@@ -82,7 +82,7 @@ setChannel () {
 	#echo "wrote: i2cset -y 0 $deviceAddr $deviceConfigReg $config w"
 
 	# wait for the conversion delay before reading the conversion register
-	/usr/bin/sleep $deviceConversionDelay
+	/bin/sleep $deviceConversionDelay
 }
 
 # read the adc value
